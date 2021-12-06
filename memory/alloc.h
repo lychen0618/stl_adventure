@@ -2,7 +2,7 @@
 #define ALLOC_H
 
 #include "construct.h"
-#include <functional>
+//#include <functional>
 
 namespace sad
 {
@@ -22,31 +22,20 @@ namespace sad
 
         malloc_allocator() = default;
 
-        void *allocate(size_t n)
+        static void *allocate(size_t n)
         {
             auto result = ::operator new(n * sizeof(value_type));
             return result;
         }
 
-        void deallocate(void *p, size_t)
+        static void deallocate(void *p, size_t)
         {
             ::operator delete(p);
         }
 
-        void *reallocate(void *p, size_t, size_t new_sz)
+        static void *reallocate(void *p, size_t, size_t new_sz)
         {
             return nullptr;
-        }
-
-        template <typename _T1, typename... _Args>
-        void construct(_T1 *__p, _Args &&...__args)
-        {
-            sad::_Construct(__p, __args...);
-        }
-
-        void destroy(_Tp *p)
-        {
-            sad::_Destroy(p);
         }
 
         // void *default_oom_malloc(size_t n)
@@ -70,12 +59,70 @@ namespace sad
         //     return nullptr;
         // }
 
-        void set_oom_handler(oom_handler_functor oom_handler)
+        static void set_oom_handler(oom_handler_functor oom_handler)
         {
             std::set_new_handler(oom_handler);
         }
     };
 
+    namespace
+    {
+        enum
+        {
+            __ALIGN = 8
+        };
+        enum
+        {
+            __MAX_BYTES = 128
+        };
+        enum
+        {
+            __SIZE_OF_FREELISTS = __MAX_BYTES / __ALIGN
+        };
+    }
+
+    template <typename _Tp>
+    class pool_allocator
+    {
+    private:
+        union node
+        {
+            union node *next;
+            char client_data[1];
+        };
+
+        static node *free_lists[__SIZE_OF_FREELISTS];
+        static char *start_free;
+        static char *end_free;
+        static size_t heap_size;
+
+        static size_t free_list_index(size_t bytes)
+        {
+            return (bytes + __ALIGN - 1) / __ALIGN - 1;
+        }
+
+        static size_t round_up(size_t bytes)
+        {
+            return (bytes + __ALIGN - 1) & ~(__ALIGN - 1);
+        }
+
+        static void *refill(size_t n);
+
+        static char *chunk_alloc(size_t size, int &num_of_nodes);
+
+    public:
+        typedef size_t size_type;
+        typedef ptrdiff_t difference_type;
+        typedef _Tp *pointer;
+        typedef const _Tp *const_pointer;
+        typedef _Tp &reference;
+        typedef const _Tp &const_reference;
+        typedef _Tp value_type;
+
+        static void *allocate(size_t n);
+        static void deallocate(void *p, size_t n);
+        static void *realloc(void *p, size_t old_sz, size_t new_sz);
+    };
 }
 
 #endif // ALLOC_H

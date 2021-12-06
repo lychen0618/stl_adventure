@@ -4,31 +4,30 @@
 #include <new>
 #include <bits/stl_iterator_base_types.h>
 #include <bits/move.h>
-#include <memory>
+//#include <memory>
 namespace sad
 {
 #if __cplusplus >= 201103L
     template <typename _T1, typename... _Args>
     inline void
-    _Construct(_T1 *__p, _Args &&...__args)
+    construct(_T1 *__p, _Args &&...__args)
     {
         ::new (static_cast<void *>(__p)) _T1(std::forward<_Args>(__args)...);
     }
 #else
     template <typename _T1, typename _T2>
     inline void
-    _Construct(_T1 *__p, const _T2 &__value)
+    construct(_T1 *__p, const _T2 &__value)
     {
         ::new (static_cast<void *>(__p)) _T1(__value);
     }
 #endif
-
     template <typename T>
-    inline void _Destroy(T *pointer)
+    inline void destroy(T *pointer)
     {
         pointer->~T();
     }
-
+    
     template <bool>
     struct _Destroy_aux
     {
@@ -37,7 +36,7 @@ namespace sad
         __destroy(_ForwardIterator __first, _ForwardIterator __last)
         {
             for (; __first != __last; ++__first)
-                sad::_Destroy(std::__addressof(*__first));
+                sad::destroy(std::__addressof(*__first));
         }
     };
 
@@ -51,7 +50,7 @@ namespace sad
 
     template <typename _ForwardIterator>
     inline void
-    _Destroy(_ForwardIterator __first, _ForwardIterator __last)
+    destroy(_ForwardIterator __first, _ForwardIterator __last)
     {
         typedef typename std::iterator_traits<_ForwardIterator>::value_type _Value_type;
         //__has_trivial_destructor(_Value_type)应该是编译器内置的函数
