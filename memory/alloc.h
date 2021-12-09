@@ -255,7 +255,6 @@ namespace sad
         }
         return result;
     }
-
 }
 
 #endif // ALLOC_H
