@@ -61,11 +61,11 @@ namespace sad
             deallocate();
         }
 
-        iterator begin() { return start; }
+        iterator begin() const { return start; }
 
-        iterator end() { return finish; }
+        iterator end() const { return finish; }
 
-        size_type size() { return static_cast<size_type>(end() - begin()); }
+        size_type size() const { return (size_type)(end() - begin()); }
 
         size_type capacity() const { return static_cast<size_type>(end_of_storage() - begin()); }
 
@@ -109,7 +109,7 @@ namespace sad
         {
             if (ed_position <= finish)
             {
-                iterator i = copy(ed_position, finish, st_position);
+                iterator i = std::copy(ed_position, finish, st_position);
                 destroy(i, finish);
                 finish = i;
             }
